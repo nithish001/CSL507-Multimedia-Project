@@ -1,8 +1,3 @@
-"""
-REFERENCE for shot detection:
-https://pyscenedetect-manual.readthedocs.io/en/latest/api/scene_manager.html#scenemanager-example
-"""
-
 # import the necessary packages
 import argparse
 import imutils
@@ -77,3 +72,10 @@ def find_scenes(video_path):
 
 if __name__=="__main__":
 	find_scenes('speechless.mp4')   
+
+
+
+"""
+REFERENCE for shot detection:
+https://pyscenedetect-manual.readthedocs.io/en/latest/api/scene_manager.html#scenemanager-example
+"""
