@@ -15,6 +15,7 @@ from scenedetect.detectors.content_detector import ContentDetector
 
 
 def find_scenes(video_path):
+    print ('extracting scenes....')
     # type: (str) -> List[Tuple[FrameTimecode, FrameTimecode]]
     video_manager = VideoManager([video_path])
     stats_manager = StatsManager()
@@ -51,13 +52,13 @@ def find_scenes(video_path):
         scene_list = scene_manager.get_scene_list(base_timecode)
         # Each scene is a tuple of (start, end) FrameTimecodes.
 
-        print('List of scenes obtained:')
-        for i, scene in enumerate(scene_list):
-            print(
-                'Scene %2d: Start %s / Frame %d, End %s / Frame %d' % (
-                i+1,
-                scene[0].get_timecode(), scene[0].get_frames(),
-                scene[1].get_timecode(), scene[1].get_frames(),))
+        # print('List of scenes obtained:')
+        # for i, scene in enumerate(scene_list):
+        #     print(
+        #         'Scene %2d: Start %s / Frame %d, End %s / Frame %d' % (
+        #         i+1,
+        #         scene[0].get_timecode(), scene[0].get_frames(),
+        #         scene[1].get_timecode(), scene[1].get_frames(),))
 
         # We only write to the stats file if a save is required:
         if stats_manager.is_save_required():
