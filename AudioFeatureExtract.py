@@ -2,6 +2,8 @@ import librosa
 import matplotlib.pyplot as plt
 import numpy as np
 from pydub import AudioSegment
+import pickle as pkl
+import os
 
 def getSamplingRateFromFile(filename):
     song = AudioSegment.from_file(filename)
@@ -46,9 +48,8 @@ def plotFeatureTimeGraph(feature, hop_length, sr):
     plt.plot(x,y)
     plt.show()
 
-def getNoiseRemovedVoiceParts(voice_parts, thresh,sr):
-    frame_length = 512
-    hop_length = 512
+def getNoiseRemovedVoiceParts(voice_parts, thresh, sr, hop_length=1024):
+    frame_length = hop_length
     rms = librosa.feature.rms(voice_parts, frame_length=frame_length, hop_length=hop_length)
     rms = rms.T
     for i in range(rms.shape[0]):
@@ -56,17 +57,53 @@ def getNoiseRemovedVoiceParts(voice_parts, thresh,sr):
             end = min((i+1)*hop_length, voice_parts.shape[0])
             voice_parts[i*hop_length : end] = 0.0
     
-    #librosa.output.write_wav('noise_removed.wav', voice_parts, sr)
+    librosa.output.write_wav('temp/noise_removed.wav', voice_parts, sr)
     return voice_parts
 
-def extractVoiceParts(filename,thresh):
+def SaveVoiceParts(filename,thresh,voiceSameTime=0.075,hop_length=1024):
+    
     sr = getSamplingRateFromFile(filename)
     y,sr = librosa.core.load(filename,sr)
+    print('number of samples ',len(y))
     voice_parts = getVocalPartsFromSignal(y,sr)
-    fin_voice_parts = getNoiseRemovedVoiceParts(voice_parts, thresh, sr)
+    fin_voice_parts = getNoiseRemovedVoiceParts(voice_parts, thresh, sr, hop_length=hop_length)
+    print('number of voice samples',len(fin_voice_parts))
     fin_voice_parts[fin_voice_parts > 0] = 1
+    voice_times_list = []
+    startTime = 0
+    endTime = 0
+    voiceSameFrames = sr * voiceSameTime
+    count = 0
+    i = 0
+    while(i < len(fin_voice_parts)):
+        if(fin_voice_parts[i] == 1):
+            startTime = float(i)/sr
+            count = 0
+            while(count < voiceSameFrames and i < len(fin_voice_parts)):
+                if(fin_voice_parts[i] == 1):
+                    count = 0
+                elif(fin_voice_parts[i] == 0):
+                    count += 1
+                i+=1
+            endTime = float(i)/sr
+            voice_times_list.append((startTime,endTime))
+        i+=1
+
+    for i in voice_times_list:
+        print(i)
+    
+    voice_parts_file = 'temp/' + os.path.basename(filename) + '_voice_parts.vp'
+    ifile = open(voice_parts_file,'wb')
+    pkl.dump(voice_times_list,ifile)
+    ifile.close()
+    
+
      
 
+
+#working parameters are 
+    #Energy threshold : 0.035
+    #hop length = 512
     
 
 
@@ -74,25 +111,10 @@ def extractVoiceParts(filename,thresh):
 
 
 if __name__ == '__main__':
-    hop_length = 512
-    filename = 'temp/foreground.wav'
-    sr = getSamplingRateFromFile(filename)
-    # print('sampling rate is ',sr)
-    # totSamples = getTotalSamples(filename,sr)
-    # tempo = calculateTempoFromFile(filename,hop_length)
-    # plotFeatureTimeGraph(tempo, hop_length, sr,totSamples)
-    # voice_mag = getVocalPartsFromFile(filename,sr)
-    # #print('total samples ',totSamples)
-    # print('voice samples ',len(voice_mag))
-    # plotAudioTimeGraph(voice_mag, sr)
-    # voice_parts = getVocalPartsFromFile(filename,sr)
-    voice_parts,sr = librosa.core.load(filename,sr)
-    print(voice_parts.shape)
-    rmse = librosa.feature.rms(voice_parts, frame_length=512, hop_length=512)
-    print(rmse.shape)
-    rmse = rmse.T
-    plotFeatureTimeGraph(rmse, 512, sr)
-    getNoiseRemovedVoiceParts(voice_parts, 0.025, sr)
+    hop_length = 1024
+    thresh = 0.035
+    filename = 'Dataset/sunflower.mp4'
+    SaveVoiceParts(filename, thresh, voiceSameTime=0.075, hop_length=hop_length)
 
 
 
